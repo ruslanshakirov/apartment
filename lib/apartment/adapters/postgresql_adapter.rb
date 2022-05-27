@@ -98,12 +98,16 @@ module Apartment
         if ActiveRecord::Base.connection.open_transactions.positive?
           conn.execute(%(CREATE SCHEMA "#{tenant}"))
         else
-          schema = %(BEGIN;
+          create_tenant_in_transaction(conn, tenant)
+        end
+      end
+
+      def create_tenant_in_transaction(conn, tenant)
+        schema = %(BEGIN;
           CREATE SCHEMA "#{tenant}";
           COMMIT;)
 
-          conn.execute(schema)
-        end
+        conn.execute(schema)
       rescue *rescuable_exceptions => e
         rollback_transaction(conn)
         raise e
